@@ -481,6 +481,7 @@ let setup_rocqproject_for_theory_rule
       ~ml_flags
       ~stanza_flags
       ~theory_dirs
+      ~rocq_or_coq
       rocq_modules
   =
   (* Process rocqdep and generate rules *)
@@ -544,7 +545,8 @@ let setup_rocqproject_for_theory_rule
     let lifetime = Lifetime.Until_clean in
     Rule.Mode.Promote { lifetime; into = None; only = None }
   in
-  let rocqproject = Path.Build.relative dir "_RocqProject" in
+  let rocqproject_name = Rocq_project.get_filename rocq_or_coq in
+  let rocqproject = Path.Build.relative dir rocqproject_name in
   Super_context.add_rule
     ~mode
     ~loc
@@ -1092,9 +1094,9 @@ let setup_theory_rules ~sctx ~dir ~dir_contents (s : Rocq_stanza.Theory.t) =
   let* mode = select_native_mode ~sctx ~dir s.buildable in
   (* First we setup the rule calling rocqdep *)
   let boot_flags = bootstrap_flags ~scope ~use_corelib ~wrapper_name rocq_modules in
-  (if not (snd s.generate_project_file)
-   then Memo.return ()
-   else
+  (match snd s.generate_project_file with
+   | None -> Memo.return ()
+   | Some rocq_or_coq ->
      setup_rocqproject_for_theory_rule
        ~scope
        ~sctx
@@ -1106,6 +1108,7 @@ let setup_theory_rules ~sctx ~dir ~dir_contents (s : Rocq_stanza.Theory.t) =
        ~ml_flags
        ~stanza_flags
        ~theory_dirs
+       ~rocq_or_coq
        rocq_modules)
   >>> setup_rocqdep_for_theory_rule
         ~sctx

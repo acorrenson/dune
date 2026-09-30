@@ -152,7 +152,7 @@ module Theory = struct
     ; modules : Ordered_set_lang.t
     ; modules_flags : (Rocq_module.Name.t * Ordered_set_lang.Unexpanded.t) list option
     ; boot : bool
-    ; generate_project_file : Loc.t * bool
+    ; generate_project_file : Loc.t * Rocq_project.t option
     ; enabled_if : Blang.t
     ; buildable : Buildable.t
     ; rocqdep_flags : Ordered_set_lang.Unexpanded.t
@@ -174,7 +174,7 @@ module Theory = struct
   ;;
 
   let check_generate_project_file (loc, generate_project_file) modules_flags =
-    if generate_project_file
+    if Option.is_some generate_project_file
     then (
       match modules_flags with
       | None -> ()
@@ -202,7 +202,8 @@ module Theory = struct
        and+ project = Dune_project.get_exn ()
        and+ synopsis = field_o "synopsis" string
        and+ boot = field_b "boot" ~check:(Dune_lang.Syntax.since rocq_syntax (0, 2))
-       and+ generate_project_file = located @@ field_b "generate_project_file"
+       and+ generate_project_file =
+         located @@ field_o "generate_project_file" Rocq_project.decode
        and+ modules = Ordered_set_lang.field "modules"
        and+ modules_flags = field_o "modules_flags" Per_file.decode
        and+ enabled_if = Enabled_if.decode ~allowed_vars:Any ~since:None ()
